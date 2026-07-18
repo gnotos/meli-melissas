@@ -3,11 +3,10 @@ import { useState } from "react";
 const IMG_ANTHEON = "/images/meli-antheon.webp";
 const IMG_KASTANO = "/images/meli-kastano.webp";
 const IMG_PEFKOU = "/images/meli-pefkou.webp";
-const IMG_SMOKE = "/images/kapnistiri.webp";
-const IMG_HIVES_GREEN = "/images/kypseles-prasino.webp";
 const IMG_BEES = "/images/melisses.webp";
 const IMG_HIVES_MOUNT = "/images/kypseles-vouno.webp";
 const IMG_SMOKERS_VALLEY = "/images/kampos.webp";
+const IMG_ZYGISMA = "/images/zygisma.webp";
 const MACHINE_IMGS = [
   "/images/mixani-1.webp",
   "/images/mixani-2.webp",
@@ -63,7 +62,7 @@ const PRODUCTS = [
     variety: "ΒΑΣΙΛΙΚΟΣ ΠΟΛΤΟΣ",
     name: "Βασιλικός Πολτός",
     weight: "10 γρ.",
-    price: 20.0,
+    price: 25.0,
     image: "/images/vasilikos-poltos.webp",   // <-- βάλε εδώ τη φωτογραφία όταν είναι έτοιμη
     desc: "Φυσικός βασιλικός πολτός, φρέσκος, απευθείας από τις κυψέλες μας. Είναι η υπερτροφή με την οποία τρέφεται η βασίλισσα και θεωρείται από τα πιο πολύτιμα προϊόντα της κυψέλης, πλούσιος σε πρωτεΐνες, βιταμίνες του συμπλέγματος Β, αμινοξέα και ιχνοστοιχεία. Αποτελεί φυσικό τονωτικό για ενέργεια και ευεξία. Διατηρείται στο ψυγείο. Καταναλώστε μισό με ένα κουταλάκι την ημέρα.",
   },
@@ -202,24 +201,27 @@ const css = `
 
 /* --- κολάζ --- */
 .collage {
-  max-width: 1040px; margin: 0 auto;
+  max-width: 1120px; margin: 0 auto;
   padding: 56px 24px 8px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-auto-rows: 210px;
-  gap: 14px;
+  display: flex; flex-direction: column;
+  gap: 24px;
 }
+.collage-row {
+  display: grid;
+  gap: 24px;
+}
+.collage-row.row-wide-tall { grid-template-columns: 16fr 9fr; }
+.collage-row.row-tall-tall { grid-template-columns: 1fr 1fr; }
 .collage-item {
   border-radius: 4px; overflow: hidden;
   border: 1px solid var(--line);
   background: var(--cream-deep);
 }
+.collage-item.landscape { aspect-ratio: 4/3; }
+.collage-item.portrait { aspect-ratio: 3/4; }
 .collage-item img {
   width: 100%; height: 100%; object-fit: cover; display: block;
-  transition: transform .35s ease;
 }
-.collage-item:hover img { transform: scale(1.03); }
-.collage-item.tall { grid-row: span 2; }
 .quote-tile {
   background: var(--paper);
   display: flex; flex-direction: column;
@@ -233,7 +235,7 @@ const css = `
   color: var(--ink);
 }
 @media (max-width: 640px) {
-  .collage { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 160px; }
+  .collage-row { grid-template-columns: 1fr; }
 }
 
 /* --- μπάντα κλεισίματος --- */
@@ -306,9 +308,10 @@ const css = `
 }
 .card-media img {
   width: 100%; height: 100%; object-fit: cover; display: block;
+  transform: translateZ(0); backface-visibility: hidden;
   transition: transform .3s ease;
 }
-.card:hover .card-media img { transform: scale(1.04); }
+.card:hover .card-media img { transform: translateZ(0) scale(1.04); }
 .card-variety {
   font-size: 13px; font-weight: 600; letter-spacing: 4px;
   color: var(--ochre-deep); margin-bottom: 6px;
@@ -620,20 +623,21 @@ export default function MeliMelissas() {
 
           {/* --- ΚΟΛΑΖ: αντικατέστησε τα IMG_ με φωτογραφίες από το μελισσοκομείο --- */}
           <section className="collage" aria-label="Φωτογραφίες από το μελισσοκομείο">
-            <div className="collage-item tall">
-              <img src={IMG_SMOKE} alt="Καπνιστήρια μπροστά από το μελισσοκομείο" />
+            <div className="collage-row row-wide-tall">
+              <div className="collage-item landscape">
+                <img src={IMG_HIVES_MOUNT} alt="Το μελισσοκομείο στο βουνό" />
+              </div>
+              <div className="collage-item portrait">
+                <img src={IMG_BEES} alt="Μέλισσες στην κηρήθρα" />
+              </div>
             </div>
-            <div className="collage-item">
-              <img src={IMG_SMOKERS_VALLEY} alt="Καπνιστήρια με θέα τον κάμπο" />
-            </div>
-            <div className="collage-item">
-              <img src={IMG_HIVES_GREEN} alt="Κυψέλες στο λιβάδι" />
-            </div>
-            <div className="collage-item">
-              <img src={IMG_BEES} alt="Μέλισσες στην κηρήθρα" />
-            </div>
-            <div className="collage-item">
-              <img src={IMG_HIVES_MOUNT} alt="Το μελισσοκομείο στο βουνό" />
+            <div className="collage-row row-tall-tall">
+              <div className="collage-item portrait">
+                <img src={IMG_SMOKERS_VALLEY} alt="Καπνιστήρια με θέα τον κάμπο" />
+              </div>
+              <div className="collage-item portrait">
+                <img src={IMG_ZYGISMA} alt="Ζύγισμα κερήθρας στο μελισσοκομείο" />
+              </div>
             </div>
           </section>
 
