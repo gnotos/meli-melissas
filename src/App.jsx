@@ -513,6 +513,19 @@ const css = `
   font-family: 'Inter', sans-serif;
 }
 .form-field input:focus, .form-field textarea:focus { outline: none; border-color: var(--ochre); }
+.form-field input:disabled, .form-field textarea:disabled { opacity: .6; }
+.payment-options { display: flex; gap: 8px; }
+.payment-opt {
+  flex: 1; background: #fff;
+  border: 1px solid var(--line); border-radius: 8px;
+  color: var(--ink); padding: 10px 8px; font-size: 13px; font-weight: 600;
+  font-family: 'Inter', sans-serif; cursor: pointer;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+.payment-opt:hover { border-color: var(--ochre); }
+.payment-opt.active { border-color: var(--ochre-deep); background: var(--cream-deep); color: var(--ochre-deep); }
+.payment-opt:disabled { opacity: .6; cursor: default; }
+.form-error { font-size: 12.5px; color: #9a3324; margin-top: 10px; line-height: 1.5; text-align: center; }
 .back-link {
   background: none; border: none; color: var(--ochre-deep);
   font-size: 13.5px; font-weight: 600; cursor: pointer;
@@ -535,8 +548,10 @@ export default function MeliMelissas() {
   const [selected, setSelected] = useState(null);   // προϊόν στο pop-up
   const [modalQty, setModalQty] = useState(1);
   const [added, setAdded] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", address: "", notes: "" });
+  const [form, setForm] = useState({ name: "", phone: "", address: "", email: "", notes: "", payment: "cod" });
   const [machineImg, setMachineImg] = useState(0);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
 
   const items = Object.entries(cart)
     .map(([id, qty]) => ({ ...PRODUCTS.find((p) => p.id === Number(id)), qty }))
@@ -564,16 +579,48 @@ export default function MeliMelissas() {
   const goTo = (p) => { setPage(p); setSelected(null); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const openDrawer = () => { setView("cart"); setDrawerOpen(true); };
 
-  const sendOrder = () => {
-    const lines = items.map((i) => `• ${i.name} (${i.weight}) x${i.qty} — ${fmt(i.qty * i.price)}`).join("\n");
-    const body =
-      `ΝΕΑ ΠΑΡΑΓΓΕΛΙΑ — Meli Melissas\n\n${lines}\n\nΣύνολο: ${fmt(total)}\n\n` +
-      `Όνομα: ${form.name}\nΤηλέφωνο: ${form.phone}\nΔιεύθυνση: ${form.address}\n` +
-      (form.notes ? `Σημειώσεις: ${form.notes}\n` : "");
-    const url = `mailto:${SHOP.email}?subject=${encodeURIComponent("Παραγγελία — " + form.name)}&body=${encodeURIComponent(body)}`;
-    window.open(url, "_blank");
-    setView("done");
-    setCart({});
+  const sendOrder = async () => {
+    setSending(true);
+    setSendError("");
+
+    const paymentLabel = form.payment === "deposit" ? "Κατάθεση σε λογαριασμό" : "Αντικαταβολή";
+    const orderLines = items
+      .map((i) => `${i.name} (${i.weight}) x${i.qty}  ${fmt(i.qty * i.price)}`)
+      .join("\n");
+
+    const payload = {
+      access_key: "230059dd-54f9-4406-9b5b-da8234d6aff6",
+      subject: `Νέα παραγγελία Meli Melissas - ${form.name}`,
+      from_name: "Φόρμα παραγγελιών Meli Melissas",
+      "Ονοματεπώνυμο": form.name,
+      "Τηλέφωνο": form.phone,
+      "Διεύθυνση αποστολής": form.address,
+      "Email πελάτη": form.email.trim() || "Δεν δόθηκε",
+      "Τρόπος πληρωμής": paymentLabel,
+      "Σχόλια": form.notes.trim() || "Δεν υπάρχουν",
+      "Παραγγελία": orderLines,
+      "Σύνολο παραγγελίας": fmt(total),
+    };
+    if (form.email.trim()) payload.replyto = form.email.trim();
+
+    try {
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setView("done");
+        setCart({});
+      } else {
+        setSendError(`Κάτι πήγε στραβά με την αποστολή. Δοκιμάστε ξανά ή καλέστε μας στο ${SHOP.phone}.`);
+      }
+    } catch {
+      setSendError(`Δεν ήταν δυνατή η αποστολή, ελέγξτε τη σύνδεσή σας στο internet. Δοκιμάστε ξανά ή καλέστε μας στο ${SHOP.phone}.`);
+    } finally {
+      setSending(false);
+    }
   };
 
   const canSend = form.name.trim() && form.phone.trim() && form.address.trim();
@@ -845,32 +892,57 @@ export default function MeliMelissas() {
             {view === "checkout" && (
               <>
                 <div className="drawer-body">
-                  <button className="back-link" onClick={() => setView("cart")}>← Πίσω στο καλάθι</button>
+                  <button className="back-link" onClick={() => { setSendError(""); setView("cart"); }}>← Πίσω στο καλάθι</button>
                   <div className="form-field">
                     <label htmlFor="f-name">Ονοματεπώνυμο *</label>
-                    <input id="f-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                    <input id="f-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} disabled={sending} />
                   </div>
                   <div className="form-field">
                     <label htmlFor="f-phone">Τηλέφωνο *</label>
-                    <input id="f-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                    <input id="f-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} disabled={sending} />
                   </div>
                   <div className="form-field">
                     <label htmlFor="f-addr">Διεύθυνση αποστολής *</label>
-                    <input id="f-addr" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+                    <input id="f-addr" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} disabled={sending} />
                   </div>
                   <div className="form-field">
-                    <label htmlFor="f-notes">Σημειώσεις</label>
-                    <textarea id="f-notes" rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+                    <label htmlFor="f-email">Email</label>
+                    <input id="f-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} disabled={sending} />
+                  </div>
+                  <div className="form-field">
+                    <label htmlFor="f-notes">Σχόλια</label>
+                    <textarea id="f-notes" rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} disabled={sending} />
+                  </div>
+                  <div className="form-field">
+                    <label>Τρόπος πληρωμής *</label>
+                    <div className="payment-options">
+                      <button
+                        type="button"
+                        className={"payment-opt" + (form.payment === "cod" ? " active" : "")}
+                        onClick={() => setForm({ ...form, payment: "cod" })}
+                        disabled={sending}
+                      >
+                        Αντικαταβολή
+                      </button>
+                      <button
+                        type="button"
+                        className={"payment-opt" + (form.payment === "deposit" ? " active" : "")}
+                        onClick={() => setForm({ ...form, payment: "deposit" })}
+                        disabled={sending}
+                      >
+                        Κατάθεση σε λογαριασμό
+                      </button>
+                    </div>
                   </div>
                   <p className="order-note">
-                    Η παραγγελία στέλνεται με email και θα σας καλέσουμε για επιβεβαίωση.
-                    Πληρωμή με αντικαταβολή ή κατάθεση.
+                    Θα επικοινωνήσουμε τηλεφωνικά για επιβεβαίωση της παραγγελίας.
                   </p>
+                  {sendError && <p className="form-error">{sendError}</p>}
                 </div>
                 <div className="drawer-foot">
                   <div className="total-row"><span>Σύνολο</span><span>{fmt(total)}</span></div>
-                  <button className="checkout-btn" disabled={!canSend} onClick={sendOrder}>
-                    Αποστολή παραγγελίας
+                  <button className="checkout-btn" disabled={!canSend || sending} onClick={sendOrder}>
+                    {sending ? "Αποστολή..." : "Αποστολή παραγγελίας"}
                   </button>
                 </div>
               </>
@@ -880,10 +952,9 @@ export default function MeliMelissas() {
               <div className="drawer-body">
                 <div className="success-box">
                   <div className="big">🍯</div>
-                  <h4>Η παραγγελία ετοιμάστηκε!</h4>
+                  <h4>Λάβαμε την παραγγελία σας!</h4>
                   <p>
-                    Άνοιξε το πρόγραμμα email σας με έτοιμο το μήνυμα — πατήστε «Αποστολή» για να μας φτάσει.
-                    Θα επικοινωνήσουμε σύντομα για επιβεβαίωση.
+                    Θα επικοινωνήσουμε τηλεφωνικά σύντομα για επιβεβαίωση.
                   </p>
                 </div>
               </div>
