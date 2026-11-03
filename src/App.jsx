@@ -72,7 +72,8 @@ const PRODUCTS = [
     name: "Βάμμα Πρόπολης",
     weight: "20 ml",
     price: 8.0,
-    image: "/images/vamma-propolis.webp",   // <-- βάλε εδώ τη φωτογραφία όταν είναι έτοιμη
+    image: "/images/vamma-propolis.webp",   // φωτογραφία στον κατάλογο
+    images: ["/images/vamma-propolis.webp", "/images/vamma-propolis-2.webp"],   // φωτογραφίες στο pop-up
     desc: "Βάμμα από αγνή πρόπολη των κυψελών μας, παρασκευασμένο με τον παραδοσιακό τρόπο. Η πρόπολη είναι η φυσική «ασπίδα» της κυψέλης. Οι μέλισσες τη συλλέγουν από ρητίνες δέντρων και τη χρησιμοποιούν για προστασία. Είναι πλούσια σε φλαβονοειδή και αντιοξειδωτικά, με γνωστές αντιμικροβιακές ιδιότητες. Ιδανικό για τον χειμώνα. Καταναλώστε λίγες σταγόνες σε μέλι ή σε νερό.",
   },
 ];
@@ -362,8 +363,18 @@ const css = `
   .modal-panel, .drawer { animation: none; }
   .card-media img, .hero-cta { transition: none; }
 }
-.modal-img { background: var(--cream-deep); }
-.modal-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.modal-img { background: var(--cream-deep); display: flex; flex-direction: column; }
+.modal-img > img { width: 100%; flex: 1; min-height: 0; object-fit: cover; display: block; }
+.modal-thumbs { display: flex; gap: 8px; padding: 8px; }
+.modal-thumb {
+  width: 64px; aspect-ratio: 1; padding: 0; cursor: pointer;
+  border: 2px solid transparent; border-radius: 4px;
+  overflow: hidden; background: var(--cream-deep); opacity: .75;
+  transition: opacity .15s ease, border-color .15s ease;
+}
+.modal-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.modal-thumb:hover { opacity: 1; }
+.modal-thumb.active { border-color: var(--ochre); opacity: 1; }
 .modal-info { padding: 34px 30px 30px; display: flex; flex-direction: column; }
 .modal-close {
   position: absolute; top: 10px; right: 12px;
@@ -547,6 +558,7 @@ export default function MeliMelissas() {
   const [view, setView] = useState("cart");
   const [selected, setSelected] = useState(null);   // προϊόν στο pop-up
   const [modalQty, setModalQty] = useState(1);
+  const [modalImg, setModalImg] = useState(0);   // ποια φωτογραφία δείχνει το pop-up
   const [added, setAdded] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", address: "", email: "", notes: "", payment: "cod" });
   const [machineImg, setMachineImg] = useState(0);
@@ -559,7 +571,8 @@ export default function MeliMelissas() {
   const count = items.reduce((s, i) => s + i.qty, 0);
   const total = items.reduce((s, i) => s + i.qty * i.price, 0);
 
-  const openProduct = (p) => { setSelected(p); setModalQty(1); setAdded(false); };
+  const openProduct = (p) => { setSelected(p); setModalQty(1); setModalImg(0); setAdded(false); };
+  const modalImages = selected ? selected.images || [selected.image] : [];
   const closeProduct = () => setSelected(null);
 
   const addFromModal = () => {
@@ -813,7 +826,21 @@ export default function MeliMelissas() {
             <div className="modal-panel">
               <button className="modal-close" onClick={closeProduct} aria-label="Κλείσιμο">×</button>
               <div className="modal-img">
-                <img src={selected.image} alt={selected.name} />
+                <img src={modalImages[modalImg]} alt={selected.name} />
+                {modalImages.length > 1 && (
+                  <div className="modal-thumbs">
+                    {modalImages.map((src, i) => (
+                      <button
+                        key={i}
+                        className={"modal-thumb" + (i === modalImg ? " active" : "")}
+                        onClick={() => setModalImg(i)}
+                        aria-label={"Φωτογραφία " + (i + 1)}
+                      >
+                        <img src={src} alt="" />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="modal-info">
                 <div className="modal-variety">{selected.variety}</div>

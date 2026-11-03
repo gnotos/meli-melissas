@@ -19,6 +19,9 @@ npm run dev        # http://localhost:5173
 | meli-antheon.webp | Βάζο — Μέλι Ανθέων |
 | meli-kastano.webp | Βάζο — Μέλι Καστανιάς |
 | meli-pefkou.webp | Βάζο — Μέλι Πεύκου |
+| vasilikos-poltos.webp | Βασιλικός Πολτός (προσωρινή εικόνα) |
+| vamma-propolis.webp | Βάμμα Πρόπολης — σταγονόμετρο (κατάλογος + 1η στο pop-up) |
+| vamma-propolis-2.webp | Βάμμα Πρόπολης — μπουκαλάκι (2η στο pop-up) |
 | kapnistiri.webp | Κολάζ αρχικής — καπνιστήρι |
 | kypseles-prasino.webp | Κολάζ αρχικής — κυψέλες στο πράσινο |
 | melisses.webp | Κολάζ αρχικής — μέλισσες (και εικόνα κοινοποίησης / og:image) |
@@ -62,7 +65,8 @@ npm run dev        # http://localhost:5173
 Όλα τα «δεδομένα» είναι στην αρχή του `src/App.jsx`:
 - `SHOP` → email, τηλέφωνο, τοποθεσία, Facebook
 - `PRODUCTS` → προϊόντα (για νέο προϊόν αντέγραψε ένα μπλοκ `{ ... }`,
-  για εξαντλημένο βάλε `soldOut: true`)
+  για εξαντλημένο βάλε `soldOut: true`, για πολλές φωτογραφίες στο pop-up
+  βάλε `images: ["...", "..."]`)
 
 ## Μελλοντικά
 
